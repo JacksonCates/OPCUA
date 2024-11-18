@@ -2,13 +2,30 @@ from asyncua import Client
 import asyncio
 
 class DataChangeHandler:
-    def __init__(self, server_url) -> None:
+    def __init__(self, server_url, tag) -> None:
+        print(f"Created data handler for server {server_url} and tag {tag}")
         self.server_url = server_url
+        self.tag = tag
+        self.data = []
+
+    def test_print(self): # TODO remove
+        import matplotlib.pyplot as plt
+        data = self.data
+        plt.figure(figsize=(10, 5))
+        plt.plot(data, label=self.tag)
+        plt.xlabel('Timestep')
+        plt.ylabel('Values')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f"plc_readings_{self.server_url.netloc.split(':')[1]}_{self.tag}.png")
 
     """Handles data change notifications."""
     def datachange_notification(self, node, val, data):
         print(f"Node {node} at {self.server_url.netloc} value changed to: {val}")
         #print(f"Data: {data}")
+        self.data.append(val)
+        if len(self.data) == 200:
+            self.test_print()
 
 class OPCUADataCollector:
     def __init__(self) -> None:
@@ -35,17 +52,17 @@ class OPCUADataCollector:
         for child in children:
             display_name = await child.read_display_name()
             if display_name.Text in tags:
-                node_ids.append(child.nodeid)
+                node_ids.append((child.nodeid, display_name.Text))
         return node_ids
 
     async def create_subscription(self, client: Client):
         """Create subscriptions to monitor tags"""
-        node_ids = await self._find_node_ids(client, self.tags)
-        for node_id in node_ids:
+        nodes = await self._find_node_ids(client, self.tags)
+        for node_id, tag in nodes:
             node = client.get_node(node_id)
             
-            handler = DataChangeHandler(client.server_url)
-            subscription = await client.create_subscription(500, handler)
+            handler = DataChangeHandler(client.server_url, tag)
+            subscription = await client.create_subscription(50, handler)
             await subscription.subscribe_data_change(node)
 
     async def collect(self):
