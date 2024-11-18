@@ -37,24 +37,36 @@ class OPCUAServerSimulator:
                     await self.update_tag("Timestamp", datetime.now())
                 await asyncio.sleep(1)
 
-async def main():
-    plc_simulator = OPCUAServerSimulator()
-    await plc_simulator._init()
-
-    await plc_simulator.add_tag("Temperature", 25.0)
-    await plc_simulator.add_tag("Pressure", 100.0)
-    await plc_simulator.add_tag("Timestamp", datetime.now())
+async def simulate_server_instance(server_id):
+    endpoint = f"opc.tcp://0.0.0.0:484{server_id}/opcua/server/"
+    name = f"OPCUA Server Simulator {server_id}"
+    uri = f"http://examples.freeopcua.github.io/server{server_id}"
+    
+    simulator = OPCUAServerSimulator(endpoint=endpoint, name=name)
+    await simulator._init(uri)
+    
+    # Add example tags
+    await simulator.add_tag("Temperature", 25.0)
+    await simulator.add_tag("Pressure", 100.0)
+    await simulator.add_tag("Timestamp", datetime.now())
 
     async def simulate_tag_update():
         while True:
-            await plc_simulator.update_tag("Temperature", 25 + 5*random.uniform(-1,1))
-            await plc_simulator.update_tag("Pressure", 100 + 10*random.uniform(-1,1))
+            await simulator.update_tag("Temperature", 25 + 5 * random.uniform(-1, 1))
+            await simulator.update_tag("Pressure", 100 + 10 * random.uniform(-1, 1))
             await asyncio.sleep(1)
 
     await asyncio.gather(
-        plc_simulator.start(),
+        simulator.start(),
         simulate_tag_update()
     )
+
+async def main():
+    server_tasks = [
+        simulate_server_instance(server_id)
+        for server_id in range(3)
+    ]
+    await asyncio.gather(*server_tasks)
 
 if __name__ == "__main__":
     asyncio.run(main())
