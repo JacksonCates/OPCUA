@@ -1,0 +1,28 @@
+{
+    "database_host": "https://us-east-1-1.aws.cloud2.influxdata.com",
+    "influx_org": "Student",
+    "influx_database": "PLCs",
+    "plc_hosts": {
+        "PLC1": {
+            "host": "opc.tcp://localhost:4840/freeopcua/server/",
+            "tags": {
+                "Pressure": { "type": "float", "period": 50 },
+                "Temperature": { "type": "float", "period": 50 }
+            }
+        },
+        "PLC2": {
+            "host": "opc.tcp://localhost:4841/freeopcua/server/",
+            "tags": {
+                "Pressure": { "type": "float", "period": 50 },
+                "Temperature": { "type": "float", "period": 50 }
+            }
+        },
+        "PLC3": {
+            "host": "opc.tcp://localhost:4842/freeopcua/server/",
+            "tags": {
+                "Pressure": { "type": "float", "period": 50 },
+                "Temperature": { "type": "float", "period": 50 }
+            }
+        }
+    }
+}
